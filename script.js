@@ -30,11 +30,16 @@ const gameOverScore = document.getElementById('gameOverScore');
 const restartBtn = document.getElementById('restartBtn');
 const stageCompletePane = document.getElementById('stageComplete');
 const nextStageBtn = document.getElementById('nextStageBtn');
+const nextStageInfo = document.getElementById('nextStageInfo');
 
 const player = {w:80,h:20,x:0,y:0,speed:260,cooldown:0};
 let bullets = [];
 let enemies = [];
 let lastSpawn = 0;
+let particles = [];
+let stars = [];
+let timeTick = 0;
+let muzzleFlash = 0;
 
 function openModal(){modal.classList.remove('hidden'); showMenu(); fitCanvas();}
 function closeModalFn(){modal.classList.add('hidden'); stopDemo();}
@@ -48,7 +53,9 @@ window.addEventListener('keyup', e=>{ keys[e.key]=false; keys[e.code]=false; });
 
 function update(dt){
   if (state !== 'playing') return;
+  timeTick += dt;
   player.cooldown = Math.max(0, player.cooldown - dt);
+  muzzleFlash = Math.max(0, muzzleFlash - dt * 4);
   let dx = 0;
   if(keys['ArrowLeft']) dx = -player.speed;
   if(keys['ArrowRight']) dx = player.speed;
@@ -59,6 +66,7 @@ function update(dt){
   if ((keys[' '] || keys['Space']) && player.cooldown <= 0) {
     bullets.push({x: player.x + player.w/2 - 4, y: player.y - 12, w:8, h:12, dy:-420});
     player.cooldown = 0.28;
+    muzzleFlash = 1;
   }
 
   bullets.forEach(b=> b.y += b.dy * dt);
@@ -76,6 +84,7 @@ function update(dt){
         en.dead = true;
         b._hit = true;
         score += 10;
+        createExplosion(en.x + en.w/2, en.y + en.h/2, '#9ff2a6');
       }
     });
   });
@@ -84,9 +93,18 @@ function update(dt){
   enemies.forEach(en => {
     if (!en.dead && rectsOverlap(en, player)){
       en.dead = true;
+      createExplosion(player.x + player.w/2, player.y + player.h/2, '#ff6b6b');
       loseLife();
     }
   });
+
+  particles.forEach(p => {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt;
+    p.vy += 90 * dt;
+  });
+  particles = particles.filter(p => p.life > 0);
 
   lastSpawn += dt;
   const spawnInterval = Math.max(0.6 - stage*0.05, 0.35);
@@ -109,16 +127,58 @@ function update(dt){
 function draw(){
   if (!ctx) return;
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  for(let i=0;i<80;i++){
-    ctx.fillStyle = i%7===0?'#ffb86b':'#9fb0ff';
-    ctx.fillRect((i*77)%canvas.width, (i*31)%canvas.height, 2,2);
-  }
+  drawStarfield();
+
+  // draw player ship (with bobbing)
+  const bob = Math.sin(timeTick * 8) * 1.5;
+  const px = player.x;
+  const py = player.y + bob;
   ctx.fillStyle = '#ff6b6b';
-  ctx.fillRect(player.x, player.y, player.w, player.h);
-  ctx.fillStyle = '#ffdcb1';
-  bullets.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
-  ctx.fillStyle = '#9ff2a6';
-  enemies.forEach(en => { if (!en.dead) ctx.fillRect(en.x, en.y, en.w, en.h); });
+  ctx.beginPath();
+  ctx.moveTo(px + player.w * 0.5, py);
+  ctx.lineTo(px + player.w * 0.92, py + player.h);
+  ctx.lineTo(px + player.w * 0.08, py + player.h);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ffd8d8';
+  ctx.fillRect(px + player.w * 0.45, py + player.h * 0.2, player.w * 0.1, player.h * 0.7);
+  if (muzzleFlash > 0) {
+    ctx.fillStyle = `rgba(255, 210, 125, ${0.35 + muzzleFlash * 0.45})`;
+    ctx.beginPath();
+    ctx.arc(px + player.w * 0.5, py - 4, 8 + muzzleFlash * 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // bullets with glow
+  bullets.forEach(b => {
+    ctx.fillStyle = '#ffdcb1';
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+    ctx.fillStyle = 'rgba(255, 220, 177, 0.35)';
+    ctx.fillRect(b.x - 2, b.y + b.h, b.w + 4, 8);
+  });
+
+  // enemies with pulsing eye
+  enemies.forEach(en => {
+    if (!en.dead) {
+      const wobble = Math.sin(timeTick * en.wobbleSpeed + en.phase) * 6;
+      const ex = en.x + wobble;
+      ctx.fillStyle = '#9ff2a6';
+      ctx.fillRect(ex, en.y, en.w, en.h);
+      ctx.fillStyle = '#11341b';
+      ctx.fillRect(ex + 8, en.y + 8, 7, 7);
+      ctx.fillRect(ex + en.w - 15, en.y + 8, 7, 7);
+      ctx.fillStyle = 'rgba(173,255,186,0.25)';
+      ctx.fillRect(ex - 3, en.y - 3, en.w + 6, 4);
+    }
+  });
+
+  // explosion particles
+  particles.forEach(p => {
+    const alpha = Math.max(0, p.life / p.maxLife);
+    ctx.fillStyle = colorWithAlpha(p.color, alpha);
+    ctx.fillRect(p.x, p.y, p.size, p.size);
+  });
+
   ctx.fillStyle = '#dbe9ff';
   ctx.font = '14px sans-serif';
   ctx.fillText(`Score: ${score}`, 10, canvas.height - 10);
@@ -150,7 +210,9 @@ function startDemo(){
   // initialize gameplay state
   bullets = [];
   enemies = [];
+  particles = [];
   lastSpawn = 0;
+  initStars();
   player.x = Math.floor((canvas.width - player.w) / 2);
   player.y = canvas.height - player.h - 18;
   updateHUD();
@@ -178,6 +240,7 @@ function fitCanvas(){
   const maxW = Math.min(window.innerWidth - 80, 1000);
   canvas.width = Math.floor(Math.min(800, maxW));
   canvas.height = Math.floor(canvas.width / ratio);
+  initStars();
 }
 window.addEventListener('resize', fitCanvas);
 fitCanvas();
@@ -192,7 +255,7 @@ function spawnEnemy(){
   const x = Math.random() * (canvas.width - w);
   const y = -20 - Math.random()*60;
   const dy = 40 + 20*stage + Math.random()*40;
-  enemies.push({x,y,w,h,dy,dead:false,entered:false});
+  enemies.push({x,y,w,h,dy,dead:false,entered:false,phase:Math.random()*Math.PI*2,wobbleSpeed:1.8 + Math.random()*2.2});
 }
 
 function loseLife(){
@@ -231,7 +294,62 @@ function showStageComplete(){
   menuPane.classList.add('hidden');
   gameOverPane.classList.add('hidden');
   stageCompletePane.classList.remove('hidden');
+  if (nextStageInfo) nextStageInfo.textContent = stage >= 3 ? 'Final wave cleared!' : `Get ready for stage ${stage + 1}`;
   updateHUD();
+}
+
+function initStars(){
+  stars = [];
+  const total = Math.max(60, Math.floor(canvas.width / 8));
+  for (let i = 0; i < total; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() < 0.12 ? 2.4 : 1.3,
+      speed: 20 + Math.random() * 85,
+      twinkle: Math.random() * Math.PI * 2
+    });
+  }
+}
+
+function drawStarfield(){
+  for (let i = 0; i < stars.length; i++) {
+    const s = stars[i];
+    s.y += s.speed * (1 / 60);
+    if (s.y > canvas.height + 3) {
+      s.y = -3;
+      s.x = Math.random() * canvas.width;
+    }
+    const alpha = 0.35 + (Math.sin(timeTick * 2 + s.twinkle) + 1) * 0.25;
+    ctx.fillStyle = `rgba(163, 193, 255, ${alpha})`;
+    ctx.fillRect(s.x, s.y, s.size, s.size);
+  }
+}
+
+function createExplosion(x, y, color){
+  const count = 14;
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 * i) / count;
+    const speed = 40 + Math.random() * 130;
+    particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 0.35 + Math.random() * 0.25,
+      maxLife: 0.6,
+      color,
+      size: 2 + Math.random() * 3
+    });
+  }
+}
+
+function colorWithAlpha(hex, alpha){
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 // UI hooks (only wire if elements exist)

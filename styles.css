@@ -13,26 +13,30 @@ html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Arial;backgr
 .site-header nav a{color:var(--muted);margin-left:16px;text-decoration:none}
 .hero{padding:60px 0;text-align:center}
 .hero h2{font-size:2rem;margin:0 0 8px}
-.btn{background:var(--accent);color:#071019;border:none;padding:10px 16px;border-radius:8px;cursor:pointer}
+.btn{background:var(--accent);color:#071019;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;transition:transform .15s ease, box-shadow .2s ease, filter .2s ease}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(255,107,107,.35);filter:brightness(1.05)}
 .games{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:18px}
-.card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.1));padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6);text-align:center}
-.card img{width:100%;height:140px;object-fit:cover;border-radius:8px;background:#071019}
+.card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.1));padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6);text-align:center;transition:transform .2s ease, box-shadow .25s ease;overflow:hidden}
+.card:hover{transform:translateY(-6px);box-shadow:0 14px 28px rgba(2,6,23,0.75)}
+.card img{width:100%;height:140px;object-fit:cover;border-radius:8px;background:#071019;transition:transform .4s ease, filter .4s ease}
+.card:hover img{transform:scale(1.05);filter:saturate(1.12)}
 .card h3{margin:12px 0 6px}
 .card p{color:var(--muted);font-size:0.95rem}
 .about{margin-top:36px;padding:18px;background:rgba(255,255,255,0.02);border-radius:10px}
 .site-footer{padding:14px 0;text-align:center;color:var(--muted);margin-top:40px}
 .modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(2,6,23,0.6)}
 .modal.hidden{display:none}
-.modal-inner{background:var(--card);padding:12px;border-radius:10px;position:relative}
+.modal-inner{background:var(--card);padding:12px;border-radius:10px;position:relative;box-shadow:0 20px 50px rgba(0,0,0,.45)}
 .close{position:absolute;right:8px;top:8px;background:transparent;border:0;color:var(--muted);font-size:18px;cursor:pointer}
 canvas{display:block;background:#071019;border-radius:6px}
 /* HUD and overlay */
 #hud{position:absolute;left:18px;top:12px;display:flex;gap:12px;z-index:10}
-#hud div{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:6px;color:var(--muted);font-weight:600}
+#hud div{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:6px;color:var(--muted);font-weight:600;backdrop-filter:blur(4px)}
 .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20}
 .overlay.hidden{display:none}
 .overlay .hidden{display:none}
-.overlay > div{background:rgba(2,6,23,0.8);padding:18px;border-radius:8px;text-align:center;color:#e6eef6}
+.overlay > div{background:rgba(2,6,23,0.8);padding:18px;border-radius:8px;text-align:center;color:#e6eef6;animation:pop-in .2s ease}
 .overlay h2{margin:0 0 8px}
 .overlay p{margin:0 0 12px;color:var(--muted)}
+@keyframes pop-in{from{transform:translateY(10px) scale(.97);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
 @media(max-width:600px){.hero h2{font-size:1.4rem}.card img{height:110px}}
