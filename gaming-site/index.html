@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Arcade Hub — Gaming Website</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <h1 class="logo">Arcade Hub</h1>
+      <nav>
+        <a href="#games">Games</a>
+        <a href="#about">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <h2>Play quick browser games and demos</h2>
+        <p>Minimal, responsive, and fun — built with HTML5 canvas.</p>
+        <button id="playDemo" class="btn">Play Demo</button>
+      </div>
+    </section>
+
+    <section id="games" class="games container">
+      <div class="card">
+        <img src="assets/space-shooter.svg" alt="Space Shooter">
+        <h3>Space Shooter</h3>
+        <p>Classic arcade shooting action. Use arrows to move.</p>
+        <button class="launch btn" data-game="space">Launch</button>
+      </div>
+
+      <div class="card">
+        <img src="assets/block-puzzle.svg" alt="Puzzle">
+        <h3>Block Puzzle</h3>
+        <p>Arrange the blocks to fill rows and score points.</p>
+        <button class="launch btn" data-game="puzzle">Launch</button>
+      </div>
+
+      <div class="card">
+        <img src="assets/endless-runner.svg" alt="Runner">
+        <h3>Endless Runner</h3>
+        <p>Dodge obstacles and see how far you can go.</p>
+        <button class="launch btn" data-game="runner">Launch</button>
+      </div>
+    </section>
+
+    <section id="about" class="container about">
+      <h3>About</h3>
+      <p>This demo site showcases small browser games built with canvas and vanilla JS. It's a starter template you can extend.</p>
+    </section>
+
+    <div id="modal" class="modal hidden">
+      <div class="modal-inner">
+          <button id="closeModal" class="close">✕</button>
+          <div id="hud">
+            <div id="score">Score: 0</div>
+            <div id="lives">Lives: 3</div>
+            <div id="stage">Stage: 1</div>
+          </div>
+          <canvas id="gameCanvas" width="800" height="480"></canvas>
+
+          <div id="overlay" class="overlay">
+            <div id="menu">
+              <h2>Space Shooter</h2>
+              <p id="menu-desc">Use ← → to move — press Space to shoot.</p>
+              <button id="startBtn" class="btn">Start</button>
+            </div>
+            <div id="gameOver" class="hidden">
+              <h2 id="gameOverTitle">Game Over</h2>
+              <p id="gameOverScore">Score: 0</p>
+              <button id="restartBtn" class="btn">Restart</button>
+            </div>
+            <div id="stageComplete" class="hidden">
+              <h2>Stage Complete</h2>
+              <p id="nextStageInfo">Prepare for the next stage</p>
+              <button id="nextStageBtn" class="btn">Continue</button>
+            </div>
+          </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">© Arcade Hub — Demo</div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
