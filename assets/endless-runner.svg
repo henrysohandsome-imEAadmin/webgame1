@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="Endless Runner cover art">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#17324b"/>
+      <stop offset="100%" stop-color="#1f1337"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#31455f"/>
+      <stop offset="100%" stop-color="#3e2e58"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#sky)"/>
+  <rect y="330" width="800" height="120" fill="url(#ground)"/>
+  <g fill="#ff8f6b">
+    <rect x="450" y="274" width="24" height="56" rx="4"/>
+    <rect x="540" y="262" width="26" height="68" rx="4"/>
+    <rect x="650" y="280" width="24" height="50" rx="4"/>
+  </g>
+  <g transform="translate(210 255)">
+    <circle cx="18" cy="18" r="14" fill="#ffe4b5"/>
+    <rect x="8" y="32" width="20" height="48" rx="10" fill="#7be7ff"/>
+    <rect x="-2" y="76" width="12" height="34" rx="5" fill="#ffd06f"/>
+    <rect x="26" y="76" width="12" height="34" rx="5" fill="#ffd06f"/>
+    <rect x="-8" y="44" width="12" height="8" rx="4" fill="#ffd06f"/>
+    <rect x="32" y="44" width="12" height="8" rx="4" fill="#ffd06f"/>
+  </g>
+  <g stroke="#a5d3ff" stroke-width="3" opacity="0.7">
+    <line x1="315" y1="285" x2="360" y2="285"/>
+    <line x1="380" y1="285" x2="420" y2="285"/>
+    <line x1="440" y1="285" x2="475" y2="285"/>
+  </g>
+  <text x="28" y="420" fill="#e6ecff" font-size="42" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Endless Runner</text>
+</svg>
