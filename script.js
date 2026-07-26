@@ -2,6 +2,9 @@ const playDemo = document.getElementById('playDemo');
 const modal = document.getElementById('modal');
 const closeModal = document.getElementById('closeModal');
 const canvas = document.getElementById('gameCanvas');
+const modalInner = document.querySelector('.modal-inner');
+const touchControls = document.getElementById('touchControls');
+const touchButtons = Array.from(document.querySelectorAll('.touch-btn'));
 let ctx = null;
 if (canvas && typeof canvas.getContext === 'function') ctx = canvas.getContext('2d');
 let running = false;
@@ -11,6 +14,8 @@ Object.defineProperty(window, 'arcadeRunning', {
 });
 // simple input map
 let keys = {};
+const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+let touchTargetX = null;
 
 // game state (player, bullets, enemies, HUD)
 let state = 'menu'; // menu, playing, stageComplete, gameover
@@ -41,8 +46,22 @@ let stars = [];
 let timeTick = 0;
 let muzzleFlash = 0;
 
-function openModal(){modal.classList.remove('hidden'); showMenu(); fitCanvas();}
-function closeModalFn(){modal.classList.add('hidden'); stopDemo();}
+function openModal(){
+  modal.classList.remove('hidden');
+  document.body.classList.add('modal-open');
+  showMenu();
+  fitCanvas();
+}
+function closeModalFn(){
+  modal.classList.add('hidden');
+  document.body.classList.remove('modal-open');
+  touchTargetX = null;
+  keys['ArrowLeft'] = false;
+  keys['ArrowRight'] = false;
+  keys[' '] = false;
+  keys['Space'] = false;
+  stopDemo();
+}
 
 playDemo.addEventListener('click', openModal);
 closeModal.addEventListener('click', closeModalFn);
@@ -50,6 +69,74 @@ document.querySelectorAll('.launch').forEach(b=>b.addEventListener('click', open
 
 window.addEventListener('keydown', e=>{ keys[e.key]=true; keys[e.code]=true; });
 window.addEventListener('keyup', e=>{ keys[e.key]=false; keys[e.code]=false; });
+
+function getTouchXFromEvent(evt){
+  if (!canvas) return null;
+  const rect = canvas.getBoundingClientRect();
+  const point = evt.touches?.[0] || evt.changedTouches?.[0] || evt;
+  if (!point) return null;
+  const x = point.clientX - rect.left;
+  const ratio = canvas.width / Math.max(1, rect.width);
+  return x * ratio;
+}
+
+function handleTouchStart(evt){
+  const x = getTouchXFromEvent(evt);
+  if (x == null) return;
+  evt.preventDefault();
+  touchTargetX = x - player.w / 2;
+  keys[' '] = true;
+  keys['Space'] = true;
+}
+
+function handleTouchMove(evt){
+  const x = getTouchXFromEvent(evt);
+  if (x == null) return;
+  evt.preventDefault();
+  touchTargetX = x - player.w / 2;
+}
+
+function handleTouchEnd(evt){
+  evt.preventDefault();
+  touchTargetX = null;
+  keys[' '] = false;
+  keys['Space'] = false;
+}
+
+if (canvas) {
+  canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+  canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+  canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+  canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+}
+
+touchButtons.forEach((btn) => {
+  const type = btn.dataset.touch;
+  const down = (evt) => {
+    evt.preventDefault();
+    if (type === 'left') keys['ArrowLeft'] = true;
+    if (type === 'right') keys['ArrowRight'] = true;
+    if (type === 'fire') {
+      keys[' '] = true;
+      keys['Space'] = true;
+    }
+  };
+  const up = (evt) => {
+    evt.preventDefault();
+    if (type === 'left') keys['ArrowLeft'] = false;
+    if (type === 'right') keys['ArrowRight'] = false;
+    if (type === 'fire') {
+      keys[' '] = false;
+      keys['Space'] = false;
+    }
+  };
+  btn.addEventListener('touchstart', down, { passive: false });
+  btn.addEventListener('touchend', up, { passive: false });
+  btn.addEventListener('touchcancel', up, { passive: false });
+  btn.addEventListener('mousedown', down);
+  btn.addEventListener('mouseup', up);
+  btn.addEventListener('mouseleave', up);
+});
 
 function update(dt){
   if (state !== 'playing') return;
@@ -60,6 +147,11 @@ function update(dt){
   if(keys['ArrowLeft']) dx = -player.speed;
   if(keys['ArrowRight']) dx = player.speed;
   player.x += dx * dt;
+  if (touchTargetX != null) {
+    const followSpeed = 700;
+    const delta = touchTargetX - player.x;
+    player.x += Math.sign(delta) * Math.min(Math.abs(delta), followSpeed * dt);
+  }
   player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
 
   // shooting
@@ -236,10 +328,19 @@ function stopDemo(){running=false}
 
 // resize canvas to be responsive
 function fitCanvas(){
+  if (!canvas || !modalInner) return;
   const ratio = 16/9;
-  const maxW = Math.min(window.innerWidth - 80, 1000);
-  canvas.width = Math.floor(Math.min(800, maxW));
-  canvas.height = Math.floor(canvas.width / ratio);
+  const reservedTop = isTouchDevice ? 170 : 120;
+  const maxW = Math.max(320, modalInner.clientWidth - 24);
+  const maxH = Math.max(220, modalInner.clientHeight - reservedTop);
+  let nextW = maxW;
+  let nextH = Math.floor(nextW / ratio);
+  if (nextH > maxH) {
+    nextH = maxH;
+    nextW = Math.floor(nextH * ratio);
+  }
+  canvas.width = Math.floor(nextW);
+  canvas.height = Math.floor(nextH);
   initStars();
 }
 window.addEventListener('resize', fitCanvas);
@@ -375,3 +476,7 @@ if (restartBtn) restartBtn.addEventListener('click', ()=>{
 
 // update HUD initially
 updateHUD();
+
+if (touchControls) {
+  touchControls.style.display = isTouchDevice ? 'flex' : 'none';
+}
