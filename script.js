@@ -14,7 +14,9 @@ Object.defineProperty(window, 'arcadeRunning', {
 });
 // simple input map
 let keys = {};
-const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+const isTouchDevice = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+  || navigator.maxTouchPoints > 0
+  || 'ontouchstart' in window;
 let touchTargetX = null;
 
 // game state (player, bullets, enemies, HUD)
@@ -103,11 +105,41 @@ function handleTouchEnd(evt){
   keys['Space'] = false;
 }
 
+function handlePointerStart(evt){
+  if (evt.pointerType === 'mouse') return;
+  const x = getTouchXFromEvent(evt);
+  if (x == null) return;
+  evt.preventDefault();
+  touchTargetX = x - player.w / 2;
+  keys[' '] = true;
+  keys['Space'] = true;
+}
+
+function handlePointerMove(evt){
+  if (evt.pointerType === 'mouse') return;
+  const x = getTouchXFromEvent(evt);
+  if (x == null) return;
+  evt.preventDefault();
+  touchTargetX = x - player.w / 2;
+}
+
+function handlePointerEnd(evt){
+  if (evt.pointerType === 'mouse') return;
+  evt.preventDefault();
+  touchTargetX = null;
+  keys[' '] = false;
+  keys['Space'] = false;
+}
+
 if (canvas) {
   canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
   canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
   canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
   canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+  canvas.addEventListener('pointerdown', handlePointerStart);
+  canvas.addEventListener('pointermove', handlePointerMove);
+  canvas.addEventListener('pointerup', handlePointerEnd);
+  canvas.addEventListener('pointercancel', handlePointerEnd);
 }
 
 touchButtons.forEach((btn) => {
@@ -133,6 +165,9 @@ touchButtons.forEach((btn) => {
   btn.addEventListener('touchstart', down, { passive: false });
   btn.addEventListener('touchend', up, { passive: false });
   btn.addEventListener('touchcancel', up, { passive: false });
+  btn.addEventListener('pointerdown', down);
+  btn.addEventListener('pointerup', up);
+  btn.addEventListener('pointercancel', up);
   btn.addEventListener('mousedown', down);
   btn.addEventListener('mouseup', up);
   btn.addEventListener('mouseleave', up);
